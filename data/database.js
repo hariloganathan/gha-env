@@ -1,25 +1,19 @@
-import { MongoClient } from 'mongodb';
+const { MongoClient } = require('mongodb');
 
-const clusterAddress = process.env.MONGODB_CLUSTER_ADDRESS;
-const dbUser = process.env.MONGODB_USERNAME;
-const dbPassword = process.env.MONGODB_PASSWORD;
-const dbName = process.env.MONGODB_DB_NAME;
+const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_CLUSTER_ADDRESS}/${process.env.MONGODB_DB_NAME}?retryWrites=true&w=majority`;
 
-const uri = `mongodb+srv://${dbUser}:${dbPassword}@${clusterAddress}/?retryWrites=true&w=majority`;
-const client = new MongoClient(uri);
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-console.log('Trying to connect to db');
-
-try {
-  await client.connect();
-  await client.db(dbName).command({ ping: 1 });
-  console.log('Connected successfully to server');
-} catch (error) {
-  console.log('Connection failed.');
-  await client.close();
-  console.log('Connection closed.');
+async function connectToDatabase() {
+  try {
+    await client.connect();
+    console.log('Connected to database');
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    return db;
+  } catch (error) {
+    console.error('Connection failed.', error);
+    throw error;
+  }
 }
 
-const database = client.db(dbName);
-
-export default database;
+module.exports = { connectToDatabase };
